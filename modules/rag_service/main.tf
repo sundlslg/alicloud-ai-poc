@@ -1,14 +1,30 @@
 variable "service_name" {
-  default = "ragpgtest"
+  description = "RAG 服务名称"
+  type        = string
+  default     = "ragpgtest"
 }
 
 variable "network_config" {
+  description = "网络配置参数"
   type = object({
     vpc_id            = string
     vswitch_id        = string
     security_group_id = string
     region            = string
   })
+}
+
+variable "postgres_config" {
+  description = "PostgreSQL 数据库配置"
+  type = object({
+    host       = string
+    port       = number
+    username   = string
+    password   = string
+    database   = string
+    table_name string
+  })
+  sensitive = true
 }
 
 resource "alicloud_pai_service" "rag" {
@@ -29,11 +45,11 @@ resource "alicloud_pai_service" "rag" {
       }
     }
     metadata = {
-      cpu              = 16
-      memory           = 32000
-      instance         = 1
+      cpu               = 16
+      memory            = 32000
+      instance          = 1
       enable_webservice = true
-      name             = var.service_name
+      name              = var.service_name
     }
     labels = {
       PAI_RAG_VERSION               = "0.1_custom"
@@ -41,35 +57,9 @@ resource "alicloud_pai_service" "rag" {
       system_eas_rag_deployment_mode = "ragWithoutLLM"
     }
   })
-}
 
-# 容器配置单独文件 (modules/rag_service/containers.tf)
-locals {
-  rag_containers = [
-    # Nginx容器
-    {
-      image  = "eas-registry-vpc.cn-shanghai.cr.aliyuncs.com/pai-eas/pai-rag:0.2.0-nginx"
-      port   = 8680
-      script = "/docker-entrypoint.sh nginx"
-    },
-    # UI容器
-    {
-      image  = "eas-registry-vpc.cn-shanghai.cr.aliyuncs.com/pai-eas/pai-rag:0.2.0-ui"
-      port   = 8002,
-      script = "pai_rag ui",
-      env    = [{ name = "PAIRAG_RAG__SETTING__interactive", value = "false" }]
-    },
-    # 主服务容器
-    {
-      image  = "eas-registry-vpc.cn-shanghai.cr.aliyuncs.com/pai-eas/pai-rag:0.2.0"
-      port   = 8001,
-      script = "pai_rag serve",
-      env    = [
-        # 这里应包含所有环境变量配置
-        { name = "PAIRAG_RAG__INDEX__VECTOR_STORE__type", value = "PostgreSQL" },
-        { name = "PAIRAG_RAG__INDEX__VECTOR_STORE__host", value = "pgm-uf6t7idr2x305eq7.pg.rds.aliyuncs.com" },
-        # ...其他环境变量...
-      ]
-    }
-  ]
+  lifecycle {
+    # 如果手动部署后某些字段可能会变化，防止 Terraform 每次计划更新，请忽略 service_config 字段变化
+    ignore_changes = [service_config]
+  }
 }

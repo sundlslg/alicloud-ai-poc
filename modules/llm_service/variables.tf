@@ -1,6 +1,5 @@
-# modules/llm_service/variables.tf
 variable "llm_config" {
-  description = "LLM服务配置参数"
+  description = "LLM 服务配置参数"
   type = object({
     instance_type  = string
     model_name     = string
@@ -10,17 +9,7 @@ variable "llm_config" {
       vpc_id            = string
       vswitch_id        = string
       security_group_id = string
+      region            = optional(string)
     })
   })
-}
-
-# modules/llm_service/storage.tf
-resource "alicloud_oss_bucket" "model_bucket" {
-  bucket = "deepseek7b-model-bucket"
-  acl    = "private"
-}
-
-# modules/llm_service/outputs.tf
-output "llm_endpoint" {
-  value = alicloud_pai_service.llm.service_endpoint
 }

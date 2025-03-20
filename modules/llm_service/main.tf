@@ -1,13 +1,15 @@
 variable "llm_config" {
+  description = "LLM 服务配置参数"
   type = object({
-    instance_type     = string
-    model_name        = string
-    gpu_count         = number
-    memory_size       = number
-    network_config    = object({
+    instance_type  = string
+    model_name     = string
+    gpu_count      = number
+    memory_size    = number
+    network_config = object({
       vpc_id            = string
       vswitch_id        = string
       security_group_id = string
+      region            = optional(string)
     })
   })
 }
@@ -26,11 +28,11 @@ resource "alicloud_pai_service" "llm" {
       networking = var.llm_config.network_config
     }
     metadata = {
-      cpu     = 16
-      gpu     = var.llm_config.gpu_count
-      memory  = var.llm_config.memory_size
+      cpu      = 16
+      gpu      = var.llm_config.gpu_count
+      memory   = var.llm_config.memory_size
       instance = 1
-      name    = var.llm_config.model_name
+      name     = var.llm_config.model_name
     }
     storage = [{
       mount_path = "/model_dir/",
@@ -40,4 +42,8 @@ resource "alicloud_pai_service" "llm" {
       }
     }]
   })
+
+  lifecycle {
+    ignore_changes = [service_config]
+  }
 }

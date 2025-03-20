@@ -4,12 +4,12 @@ output "vpc_id" {
 }
 
 output "vswitch_id" {
-  description = "虚拟交换机ID"
+  description = "虚拟交换机 ID"
   value       = var.vswitch_id
 }
 
 output "security_group_id" {
-  description = "安全组ID"
+  description = "安全组 ID"
   value       = var.security_group_id
 }
 
